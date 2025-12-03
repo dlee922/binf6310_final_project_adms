@@ -15,16 +15,16 @@ library(forcats)
 
 ### read in data
 
-df <- read_delim("path/to/supplementary_table_1.tsv", 
+df <- read_delim("../data/supplementary_table_1.tsv", 
                  delim = "\t", escape_double = FALSE,
                  trim_ws = TRUE)
-tem1.report <- read_delim("path/to/supplementary_table_2.csv", 
+tem1.report <- read_delim("../data/supplementary_table_2.csv", 
                           delim = "\t", escape_double = FALSE, 
                           trim_ws = TRUE)
 
-phylo <- read.tree("path/to/GTR_F_I_R4.treefile")
+phylo <- read.tree("../data/ml_tree.txt")
 
-exp <- read_excel("path/to/supplementary_table_3.xlsx")
+exp <- read_excel("../data/supplementary_table_3.xlsx")
 
 
 ### prepare phylogeny
@@ -306,5 +306,3 @@ library(cowplot)
 plot_grid(p, NULL, p.2, NULL ,p.3, NULL, p.4, align='hv', 
           rel_widths = c(1, -0.18, 0.6, -0.15, -0.1, 0.4), nrow=1,
           labels=c("a", "", "b", "", "c", "", "d"))
-
-
