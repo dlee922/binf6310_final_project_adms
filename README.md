@@ -1,5 +1,8 @@
 ## *E. coli* phylogeny drives co-amoxiclav resistance through variable expression of *bla*<sub>TEM-1</sub>
 
+## BINF 6310 Note
+All scripts related to project data will be found in their respective directories under results for ease of understanding. The README below is related to the original paper's available data
+
 ## Citation
 
 The repository accompanies the preprint:
