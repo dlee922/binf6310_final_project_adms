@@ -1,0 +1,4 @@
+location_category,n,mean_mic,median_mic,sd_mic,min_mic,max_mic
+Not detected,54,27.8,32.2,7.7,8.2,32.2
+Plasmid only,10,22.6,24.2,10.5,8.2,32.2
+Both,313,15.3,8.2,10.1,2.2,32.2

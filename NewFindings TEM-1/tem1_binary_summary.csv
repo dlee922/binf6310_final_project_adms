@@ -1,0 +1,3 @@
+group,n,mean_mic,median_mic,sd_mic
+WITHOUT TEM-1,54,27.8,32.2,7.7
+WITH TEM-1,323,15.5,8.2,10.2

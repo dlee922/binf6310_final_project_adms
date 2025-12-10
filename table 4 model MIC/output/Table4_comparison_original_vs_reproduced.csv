@@ -1,0 +1,6 @@
+"Parameter","Original_Mean","Original_CI_Lower","Original_CI_Upper","Reproduced_Mean","Reproduced_CI_Lower","Reproduced_CI_Upper","Diff_Mean"
+"Intercept",3.92,2.92,4.85,3.92,2.98,4.86,0
+"TEM-1 copy number",2.07,1.38,2.78,2.07,1.4,2.78,0
+"TEM-1 present (>1)",0.97,0.02,1.9,0.97,0.04,1.92,0
+"TEM-1 promoter: C32T (TGGCGA)",6.06,4.15,8.08,6.04,4.2,8.08,-0.02
+"TEM-1 promoter: C32T+G175A (TGGCGG)",5.87,3.89,7.87,5.85,3.93,7.92,-0.02
