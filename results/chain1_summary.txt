@@ -1,0 +1,65 @@
+
+ Iterations = 500001:4999901
+ Thinning interval  = 100
+ Sample size  = 45000 
+
+ DIC: 
+
+ G-structure:  ~phylo
+
+      post.mean  l-95% CI u-95% CI eff.samp
+phylo   0.09711 6.118e-09   0.2353    28065
+
+               ~isolate.id
+
+           post.mean l-95% CI u-95% CI eff.samp
+isolate.id    0.1808   0.1038   0.2705    23023
+
+               ~us(at.level(trait, "mic")):phylo
+
+                                                    post.mean l-95% CI u-95% CI
+at.level(trait, "mic"):at.level(trait, "mic").phylo    0.5647   0.1436    1.056
+                                                    eff.samp
+at.level(trait, "mic"):at.level(trait, "mic").phylo    42257
+
+ R-structure:  ~idh(trait):units
+
+               post.mean l-95% CI u-95% CI eff.samp
+traitexp.units    0.0403  0.03243   0.0486     6193
+traitmic.units    0.4156  0.23616   0.6013    26016
+
+ Location effects: y ~ -1 + trait:(1 + tem1.isolate.scaled + tem1.isolate.copy.number.scaled + promoter.snv) 
+
+                                         post.mean l-95% CI u-95% CI eff.samp
+(Intercept)                                4.32911  3.87306  4.77926    45000
+traitexp:tem1.isolate.scaledFALSE         -4.54709 -5.17863 -3.90967    45000
+traitmic:tem1.isolate.scaledFALSE         -0.46057 -0.92430 -0.01917    45000
+traitexp:tem1.isolate.copy.number.scaled  -1.02188 -1.94117 -0.07701    45000
+traitmic:tem1.isolate.copy.number.scaled   1.03268  0.72062  1.33057    45490
+traitexp:promoter.snvCGGCGA               -0.24860 -0.50073  0.01671    45000
+traitmic:promoter.snvCGGCGA                0.03302 -0.22192  0.29777    45000
+traitexp:promoter.snvTGGCGA               -1.66081 -2.00485 -1.29025    43999
+traitmic:promoter.snvTGGCGA                2.34501  1.81619  2.87210    45000
+traitexp:promoter.snvTGGCGG               -1.68396 -2.06422 -1.29994    44149
+traitmic:promoter.snvTGGCGG                2.22958  1.69890  2.77571    45572
+                                          pMCMC    
+(Intercept)                              <2e-05 ***
+traitexp:tem1.isolate.scaledFALSE        <2e-05 ***
+traitmic:tem1.isolate.scaledFALSE        0.0460 *  
+traitexp:tem1.isolate.copy.number.scaled 0.0335 *  
+traitmic:tem1.isolate.copy.number.scaled <2e-05 ***
+traitexp:promoter.snvCGGCGA              0.0616 .  
+traitmic:promoter.snvCGGCGA              0.8014    
+traitexp:promoter.snvTGGCGA              <2e-05 ***
+traitmic:promoter.snvTGGCGA              <2e-05 ***
+traitexp:promoter.snvTGGCGG              <2e-05 ***
+traitmic:promoter.snvTGGCGG              <2e-05 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+ Theta scale parameter: 
+
+            post.mean l-95% CI u-95% CI eff.samp   pMCMC   
+theta_scale   -1.1292  -1.5038  -0.7056     3713 0.00342 **
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1

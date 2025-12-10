@@ -163,8 +163,8 @@ run_chain <- function(seed, outfile_prefix){
       ginverse = list(phylo = inv.phylo$Ainv),
       data = df.model,
       prior = prior,
-      nitt = 10000000,
-      burnin = 1000000,
+      nitt = 5000000,
+      burnin = 500000,
       thin = 100,
       DIC = FALSE,
       pr = TRUE
