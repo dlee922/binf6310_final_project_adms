@@ -6,28 +6,33 @@ library(dplyr)
 library(reshape2)
 library(ggplot2)
 library(RColorBrewer)
-library(ggtext)
+# library(ggtext)  # not used
 library(tidyr)
 library(parameters)
 library(coda)
 library(readxl)
 
-### read in data
+## --------- Setup results dir and logging ----------
+results_dir <- "/home/desai.ara/binf6310_final_project_adms/results"
+if (!dir.exists(results_dir)) dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
 
-df <- read_delim("path/to/supplementary_table_1.tsv", 
-                 delim = "\t", escape_double = FALSE,
-                 trim_ws = TRUE)
-tem1.report <- read_delim("path/to/supplementary_table_2.csv", 
-                          delim = "\t", escape_double = FALSE, 
-                          trim_ws = TRUE)
+msg <- function(...) message(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " - ", ...)
 
-phylo <- read.tree("path/to/GTR_F_I_R4.treefile")
+msg("Process Check: Finished loading libraries")
 
-exp <- read_excel("path/to/supplementary_table_3.xlsx")
+## --------- read in data ----------
+msg("Reading data")
+df <- read_delim("/home/desai.ara/binf6310_final_project_adms/data/supplementary_data_1.tsv",
+                 delim = "\t", escape_double = FALSE, trim_ws = TRUE, show_col_types = FALSE)
+tem1.report <- read_delim("/home/desai.ara/binf6310_final_project_adms/data/supplementary_data_2.tsv",
+                          delim = "\t", escape_double = FALSE, trim_ws = TRUE, show_col_types = FALSE)
+phylo <- read.tree("/home/desai.ara/binf6310_final_project_adms/data/ml_tree.txt")
+exp <- read_excel("/home/desai.ara/binf6310_final_project_adms/data/supplementary_data_3.xlsx")
+msg("Finished Reading data")
 
-### prepare MIC data
-
-df.mic <- df %>% 
+## --------- prepare MIC data ----------
+msg("Preparing MIC data")
+df.mic <- df %>%
   mutate(tem1.contig.copy.number = contig.copy.number * tem1.replicon) %>%
   group_by(isolate.id) %>%
   mutate(tem1.isolate.copy.number = sum(tem1.contig.copy.number)) %>%
@@ -39,9 +44,9 @@ df.mic <- df %>%
   ungroup() %>%
   select(isolate.id, isolate.assembly, coamox.mic, tem1.isolate.scaled, tem1.isolate.copy.number.scaled) %>%
   mutate(coamox.mic = factor(coamox.mic, ordered = TRUE, levels = c("<=2.2", "4.2", "8.2",
-                                                                    "16.2", "32.2", ">32.2"))) 
+                                                                    "16.2", "32.2", ">32.2")))
 
-upper_percentile_value <- quantile(df.mic$tem1.isolate.copy.number.scaled, 0.95)
+upper_percentile_value <- quantile(df.mic$tem1.isolate.copy.number.scaled, 0.95, na.rm = TRUE)
 df.mic$tem1.isolate.copy.number.scaled[df.mic$tem1.isolate.copy.number.scaled > upper_percentile_value] <- upper_percentile_value
 
 tem1.model <- tem1.report %>%
@@ -60,21 +65,20 @@ tem1.model <- tem1.report %>%
   distinct()
 
 df.mic <- merge(df.mic, tem1.model, by="isolate.assembly", all.x=TRUE) %>%
-  filter(!is.na(promoter.snv)) 
+  filter(!is.na(promoter.snv))
 
-summary(as.factor(df.mic$promoter.snv))
-df.mic$promoter.snv = factor(df.mic$promoter.snv, ordered = FALSE, 
-                               levels = c("CGGCGG", "CGGCGA", "TGGCGA",
-                                          "TGGCGG"))
+df.mic$promoter.snv <- factor(df.mic$promoter.snv, ordered = FALSE,
+                              levels = c("CGGCGG", "CGGCGA", "TGGCGA", "TGGCGG"))
 
 df.mic$trait <- "mic"
 df.mic$family <- "gaussian"
-
 df.mic <- as.data.frame(df.mic)
 df.mic$phylo <- as.factor(df.mic$isolate.assembly)
 
-### prepare expression data
+msg("Finished MIC data")
 
+## --------- prepare expression data ----------
+msg("Preparing expression data")
 df.exp <- df %>%
   filter(tem1.isolate==1 & tem1.replicon==1) %>%
   select(accession, isolate.assembly, contig.assembly)
@@ -84,26 +88,21 @@ exp <- exp[c("Isolate", "delta Ct (control)")]
 colnames(exp) <- c("accession", "exp")
 
 df.exp <- merge(df.exp, exp, by="accession", all.y=TRUE)
-
 df.exp <- df.exp %>% filter(!is.na(exp)) %>% filter(!is.na(isolate.assembly)) %>% distinct()
 df.exp <- df.exp %>% group_by(accession) %>% mutate(run = row_number())
-
-mean.exp <- mean(df.exp$exp)
-sd.exp <- sd(df.exp$exp)
-
+mean.exp <- mean(df.exp$exp, na.rm = TRUE)
+sd.exp <- sd(df.exp$exp, na.rm = TRUE)
 df.exp <- df.exp %>%
   mutate(exp.scaled = (exp - mean.exp) / sd.exp)
-
-up.exp <- quantile(df.exp$exp.scaled, 0.95)
+up.exp <- quantile(df.exp$exp.scaled, 0.95, na.rm = TRUE)
 df.exp$exp.scaled[df.exp$exp.scaled > up.exp] <- up.exp
-
 df.exp$trait <- "exp"
 df.exp$family <- "gaussian"
+msg("Finished expression data")
 
-### wrangle
-
+## --------- wrangle ----------
+msg("Wrangling/model frame")
 df.model <- merge(df.mic, df.exp, all=TRUE, by=c("isolate.assembly", "trait", "family"))
-
 df.model <- df.model %>%
   group_by(isolate.assembly) %>%
   filter(!(!("mic" %in% trait) & "exp" %in% trait)) %>%
@@ -115,74 +114,114 @@ df.model <- df.model %>%
   ungroup() %>%
   select(isolate.id, phylo, trait, family, tem1.isolate.scaled, tem1.isolate.copy.number.scaled,
          promoter.snv, coamox.mic, exp.scaled, run)
-
 df.model$y <- ifelse(!is.na(df.model$coamox.mic), as.factor(df.model$coamox.mic), as.numeric(df.model$exp.scaled))
-
 df.model$trait <- as.factor(df.model$trait)
+msg("Finished wrangle data")
 
-### prepare phylogeny
-
+## --------- phylogeny ----------
+msg("Preparing phylogeny")
 df.model$phylo <- as.character(df.model$phylo)
 phylo$tip.label <- as.character(phylo$tip.label)
 phylo$node.label <- NULL
-
 phylo <- keep.tip(phylo, df.model$phylo)
-
 phylo <- midpoint.root(phylo)
+# chronos might warn; that's OK. you can adjust control if needed.
+phylo.u <- tryCatch(
+  chronos(phylo, lambda=1, model="correlated"),
+  error = function(e){
+    msg("chronos() error: ", conditionMessage(e))
+    stop(e)
+  }
+)
+msg("is rooted? ", is.rooted(phylo.u), "; is ultrametric? ", is.ultrametric(phylo.u))
+inv.phylo <- inverseA(phylo.u, nodes="TIPS", scale=TRUE)
+msg("Finished phylogeny data")
 
-phylo.u <- chronos(phylo, lambda=1, model="correlated")
-
-is.rooted(phylo.u)
-is.ultrametric(phylo.u)
-
-inv.phylo <- inverseA(phylo.u,nodes="TIPS",scale=TRUE)
-
-### run model
-
+## --------- prior and model run ----------
+msg("Setting prior and starting MCMC runs")
 df.model <- as.data.frame(df.model)
+prior <- list(
+  G=list(
+    G1=list(V=diag(1),nu=1, alpha.mu = 0, alpha.V = 1e+3),
+    G2=list(V=diag(1),nu=1, alpha.mu = 0, alpha.V = 1e+3),
+    G3=list(V=diag(1),nu=1, alpha.mu = 0, alpha.V = 1e+3)
+  ),
+  R = list(V=diag(2), nu=0.002),
+  S = list(mu=0, V=1e+3)
+)
 
-prior <- list(G=list(G1=list(V=diag(1),nu=1, alpha.mu = 0, alpha.V = 1e+3),
-                     G2=list(V=diag(1),nu=1, alpha.mu = 0, alpha.V = 1e+3),
-                     G3=list(V=diag(1),nu=1, alpha.mu = 0, alpha.V = 1e+3)),
-              R = list(V=diag(2), nu=0.002),#, fix=2),
-              S = list(mu=0, V=1e+3))
+## Wrapper to run and capture errors
+run_chain <- function(seed, outfile_prefix){
+  set.seed(seed)
+  tryCatch({
+    ch <- MCMCglmm(
+      y ~ -1 + trait:(1 + tem1.isolate.scaled + tem1.isolate.copy.number.scaled + promoter.snv),
+      random = ~ phylo + isolate.id + us(at.level(trait, "mic")):phylo,
+      rcov = ~ idh(trait):units,
+      family = NULL,
+      theta_scale = list(factor="trait", level="mic", random=1:2),
+      ginverse = list(phylo = inv.phylo$Ainv),
+      data = df.model,
+      prior = prior,
+      nitt = 5000000,
+      burnin = 500000,
+      thin = 100,
+      DIC = FALSE,
+      pr = TRUE
+    )
+    # Save chain object immediately
+    saveRDS(ch, file = file.path(results_dir, paste0(outfile_prefix, "_chain.rds")))
+    return(ch)
+  }, error = function(e){
+    msg("ERROR running chain (seed=", seed, "): ", conditionMessage(e))
+    writeLines(conditionMessage(e), con = file.path(results_dir, paste0(outfile_prefix, "_error.txt")))
+    return(NULL)
+  })
+}
 
-set.seed(1)
-chain.1 <- MCMCglmm(y ~ -1 + trait:(1 + tem1.isolate.scaled + tem1.isolate.copy.number.scaled + promoter.snv),
-                  random= ~ phylo + isolate.id + us(at.level(trait, "mic")):phylo,
-                  rcov= ~ idh(trait):units,
-                  family=NULL,
-                  theta_scale = list(factor="trait", level="mic", random=1:2),
-                  ginverse=list(phylo=inv.phylo$Ainv),
-                  data=df.model,
-                  prior=prior,
-                  nitt=10000000,
-                  burnin=1000000,
-                  thin=100,
-                  DIC=FALSE,
-                  pr=TRUE)
+msg("Running chain 1")
+chain.1 <- run_chain(1, "chain1")
+msg("Running chain 2")
+chain.2 <- run_chain(2, "chain2")
 
-set.seed(2)
-chain.2 <- MCMCglmm(y ~ -1 + trait:(1 + tem1.isolate.scaled + tem1.isolate.copy.number.scaled + promoter.snv),
-                    random= ~ phylo + isolate.id + us(at.level(trait, "mic")):phylo,
-                    rcov= ~ idh(trait):units,
-                    family=NULL,
-                    theta_scale = list(factor="trait", level="mic", random=1:2),
-                    ginverse=list(phylo=inv.phylo$Ainv),
-                    data=df.model,
-                    prior=prior,
-                    nitt=10000000,
-                    burnin=1000000,
-                    thin=100,
-                    DIC=FALSE,
-                    pr=TRUE)
+if (is.null(chain.1) || is.null(chain.2)) {
+  msg("One or both chains failed. Check error files in: ", results_dir)
+  quit(save = "no", status = 1)
+}
 
-summary(chain.1)
+msg("Model finished")
+
+## --------- Save summaries, plots, diagnostics ----------
+msg("Saving outputs to ", results_dir)
+
+# summaries to text
+summary_chain_1 <- summary(chain.1)
+capture.output(summary_chain_1, file = file.path(results_dir, "chain1_summary.txt"))
+
+summary_chain_2 <- summary(chain.2)
+capture.output(summary_chain_2, file = file.path(results_dir, "chain2_summary.txt"))
+
+# plots
+pdf(file.path(results_dir, "chain1_plot.pdf"))
 plot(chain.1)
+dev.off()
 
-summary(chain.2)
+pdf(file.path(results_dir, "chain2_plot.pdf"))
 plot(chain.2)
+dev.off()
 
+# save R objects
+save(chain.1, chain.2, file = file.path(results_dir, "chains.RData"))
+saveRDS(df.model, file = file.path(results_dir, "df_model.rds"))
+
+# Gelman diagnostic: create mcmc.list from Sol (posterior solutions)
 mclist <- mcmc.list(chain.1$Sol, chain.2$Sol)
-gelman.diag(mclist)
+gelman_results <- gelman.diag(mclist)
+capture.output(gelman_results, file = file.path(results_dir, "gelman_diag.txt"))
 
+# Save gelman numeric PSRF as CSV for easier parsing
+if (!is.null(gelman_results$psrf)) {
+  write.csv(gelman_results$psrf, file = file.path(results_dir, "gelman_diag_psrf.csv"), row.names = TRUE)
+}
+
+msg("All outputs saved. Done.")
