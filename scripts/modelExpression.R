@@ -15,16 +15,16 @@ library(forcats)
 
 ### read in data
 
-df <- read_delim("../data/supplementary_table_1.tsv", 
+df <- read_delim("path/to/supplementary_table_1.tsv", 
                  delim = "\t", escape_double = FALSE,
                  trim_ws = TRUE)
-tem1.report <- read_delim("../data/supplementary_table_2.csv", 
+tem1.report <- read_delim("path/to/supplementary_table_2.csv", 
                           delim = "\t", escape_double = FALSE, 
                           trim_ws = TRUE)
 
-phylo <- read.tree("../data/ml_tree.txt")
+phylo <- read.tree("path/to/GTR_F_I_R4.treefile")
 
-exp <- read_excel("../data/supplementary_table_3.xlsx")
+exp <- read_excel("path/to/supplementary_table_3.xlsx")
 
 
 ### prepare phylogeny
@@ -50,14 +50,14 @@ df.model <- df %>%
 tem1.report.less <- tem1.report[c("isolate.assembly", "contig.assembly", "promoter.snv", "tem1.snv")]
 
 df.model <- merge(df.model, tem1.report.less, 
-                    by=c("isolate.assembly", "contig.assembly"),
-                    all.x=TRUE)
+                  by=c("isolate.assembly", "contig.assembly"),
+                  all.x=TRUE)
 
 df.model$promoter.type <- ifelse(df.model$promoter.snv=="tggcgg", "TG",
-                                   ifelse(df.model$promoter.snv=="tggcga", "TA",
-                                   ifelse(df.model$promoter.snv=="cggcgg", "CG",
-                                   ifelse(df.model$promoter.snv=="cggcga", "CA",
-                                   NA))))
+                                 ifelse(df.model$promoter.snv=="tggcga", "TA",
+                                        ifelse(df.model$promoter.snv=="cggcgg", "CG",
+                                               ifelse(df.model$promoter.snv=="cggcga", "CA",
+                                                      NA))))
 
 df.model <- df.model %>% filter(!is.na(promoter.type))
 
@@ -183,9 +183,9 @@ df.plot.phylo$tip.label <- as.character(df.plot.phylo$tip.label)
 df.plot.phylo$ST <- ifelse(df.plot.phylo$mlst.st=="12", "12",
                            ifelse(df.plot.phylo$mlst.st=="127", "127",
                                   ifelse(df.plot.phylo$mlst.st=="69", "69",
-                           "Other")))
+                                         "Other")))
 df.plot.phylo$Replicon <- ifelse(df.plot.phylo$contig.type=="chromosome", "Chromosome",
-                           ifelse(df.plot.phylo$contig.type=="plasmid", "Plasmid", NA))
+                                 ifelse(df.plot.phylo$contig.type=="plasmid", "Plasmid", NA))
 
 p <- ggtree(phylo.plot) +
   geom_treescale(x=0, y=40, width=0.01)
@@ -224,7 +224,7 @@ p.2 <- ggplot(phylo.effects.long, aes(x = tip, y = -mean)) +
   geom_errorbar(aes(ymin=-CI_low, ymax=-CI_high), width=0) +
   geom_point(aes(fill = mean), shape = 21, colour = "black", size = 3, stroke = 0.8) +
   scale_fill_gradient2(midpoint = 0, low = "#b2182b", mid = "#f7f7f7", high = "#2166ac") +
-   theme_minimal() +
+  theme_minimal() +
   coord_flip() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
